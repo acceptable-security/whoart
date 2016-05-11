@@ -12,4 +12,4 @@ $(BINARY): $(OBJECTS)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJECTS) -o $(BINARY)
 
 $(BUILDDIR)/%.o: %.c
-	$(CC) $(CFLAGS) $(LDFLAGS) -I$(HEADERDIR) -I$(dir $<) -c $< -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) -I$(HEADERDIR) -I$(dir $<) -Isrc -c $< -o $@
