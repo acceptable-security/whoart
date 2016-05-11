@@ -1,5 +1,5 @@
 #include <stdbool.h>
-#include "../../aabb/aabb.h"
+#include "../aabb/aabb.h"
 
 typedef struct {
     unsigned int x;

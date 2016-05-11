@@ -1,4 +1,5 @@
 #include "../color/color.h"
+#include "../quadimage/quadimage.h"
 
 typedef struct {
     union {
@@ -12,7 +13,10 @@ typedef struct {
 } layer_image_data_t;
 
 typedef struct {
-    /** TODO, QUADTREE **/
+    quadimage_t* qt;
+
+    unsigned int width;
+    unsigned int height;
 } layer_drawing_data_t;
 
 typedef struct {
