@@ -13,3 +13,6 @@ $(BINARY): $(OBJECTS)
 
 $(BUILDDIR)/%.o: %.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -I$(HEADERDIR) -I$(dir $<) -Isrc -c $< -o $@
+
+clean:
+	rm $(OBJECTS)

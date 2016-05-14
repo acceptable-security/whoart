@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "images/layer/quadtree.h"
+#include "quadtree/quadtree.h"
 
 int main(int argc, char* argv[]) {
     quadtree_t* qt = quadtree_init((aabb_t) {

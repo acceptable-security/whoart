@@ -1,4 +1,3 @@
-#include "../color/color.h"
 #include "../quadimage/quadimage.h"
 
 typedef struct {
