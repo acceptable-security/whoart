@@ -5,7 +5,7 @@ BINARY := whoart
 BUILDDIR := build
 HEADERDIR := lib
 CFLAGS :=
-LDFLAGS := -lm
+LDFLAGS := -lm -lglfw  -lGL -lX11 -lpthread -lXrandr -lXi -lGLEW
 
 SOURCES := $(shell find $(SOURCEDIR) -name '*.c')
 OBJECTS := $(addprefix $(BUILDDIR)/, $(SOURCES:%.c=%.o))
