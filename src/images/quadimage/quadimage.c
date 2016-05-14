@@ -10,7 +10,7 @@ quadimage_t* quadimage_init(aabb_t aabb) {
     }
 
     qt->aabb = aabb;
-    qt->color = (color32_t) { .bits = 0 };
+    qt->color = (color_t) { };
     qt->northEast = NULL;
     qt->northWest = NULL;
     qt->southWest = NULL;
@@ -100,7 +100,7 @@ bool quadimage_split(quadimage_t* qt) {
     return true;
 }
 
-bool quadimage_insert_point(quadimage_t* qt, unsigned int x, unsigned int y, color32_t color) {
+bool quadimage_insert_point(quadimage_t* qt, unsigned int x, unsigned int y, color_t color) {
     if ( qt == NULL ) {
         return false;
     }
@@ -123,7 +123,7 @@ bool quadimage_insert_point(quadimage_t* qt, unsigned int x, unsigned int y, col
     if ( quadimage_insert_point(qt->northEast, x, y, color) ) {
         qt->fields.dirty = 1;
 
-        if ( color.bits != qt->color.bits ) {
+        if ( !color_equals(color, qt->color) ) {
             qt->fields.single = 0;
         }
 
@@ -132,7 +132,7 @@ bool quadimage_insert_point(quadimage_t* qt, unsigned int x, unsigned int y, col
     else if ( quadimage_insert_point(qt->northWest, x, y, color) ) {
         qt->fields.dirty = 1;
 
-        if ( color.bits != qt->color.bits ) {
+        if ( !color_equals(color, qt->color) ) {
             qt->fields.single = 0;
         }
 
@@ -141,7 +141,7 @@ bool quadimage_insert_point(quadimage_t* qt, unsigned int x, unsigned int y, col
     else if ( quadimage_insert_point(qt->southEast, x, y, color) )  {
         qt->fields.dirty = 1;
 
-        if ( color.bits != qt->color.bits ) {
+        if ( !color_equals(color, qt->color) ) {
             qt->fields.single = 0;
         }
 
@@ -150,7 +150,7 @@ bool quadimage_insert_point(quadimage_t* qt, unsigned int x, unsigned int y, col
     else if ( quadimage_insert_point(qt->southWest, x, y, color) ) {
         qt->fields.dirty = 1;
 
-        if ( color.bits != qt->color.bits ) {
+        if ( !color_equals(color, qt->color) ) {
             qt->fields.single = 0;
         }
 
@@ -160,7 +160,7 @@ bool quadimage_insert_point(quadimage_t* qt, unsigned int x, unsigned int y, col
     return false;
 }
 
-void quadimage_fill_aabb(quadimage_t* qt, aabb_t aabb, color32_t color) {
+void quadimage_fill_aabb(quadimage_t* qt, aabb_t aabb, color_t color) {
     if ( qt == NULL ) {
         return;
     }
@@ -199,9 +199,9 @@ void quadimage_fill_aabb(quadimage_t* qt, aabb_t aabb, color32_t color) {
     return;
 }
 
-color32_t quadimage_search(quadimage_t* qt, unsigned int x, unsigned int y) {
+color_t quadimage_search(quadimage_t* qt, unsigned int x, unsigned int y) {
     if ( qt == NULL ) {
-        return (color32_t) { .bits = 0 };
+        return (color_t) { };
     }
 
     if ( qt->northEast != NULL ) {
@@ -214,7 +214,7 @@ color32_t quadimage_search(quadimage_t* qt, unsigned int x, unsigned int y) {
         return qt->color;
     }
 
-    return (color32_t) { .bits = 0 };
+    return (color_t) { };
 }
 
 void quadimage_clean(quadimage_t* qt) {

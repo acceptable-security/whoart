@@ -3,7 +3,7 @@
 #include "../color/color.h"
 
 typedef struct _quadimage {
-    color32_t color;
+    color_t color;
     aabb_t aabb;
 
     struct {
@@ -18,7 +18,7 @@ typedef struct _quadimage {
 } quadimage_t;
 
 quadimage_t* quadimage_init(aabb_t aabb);
-bool quadimage_insert_point(quadimage_t* qt, unsigned int x, unsigned int y, color32_t data);
-void quadimage_fill_aabb(quadimage_t* qt, aabb_t aabb, color32_t color);
-color32_t quadimage_search(quadimage_t* qt, unsigned int x, unsigned int y);
+bool quadimage_insert_point(quadimage_t* qt, unsigned int x, unsigned int y, color_t data);
+void quadimage_fill_aabb(quadimage_t* qt, aabb_t aabb, color_t color);
+color_t quadimage_search(quadimage_t* qt, unsigned int x, unsigned int y);
 void quadimage_clean(quadimage_t* qt);

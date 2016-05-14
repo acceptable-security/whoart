@@ -1,12 +1,7 @@
 #include "../quadimage/quadimage.h"
 
 typedef struct {
-    union {
-        color64_t** c64_data;
-        color32_t** c32_data;
-    };
-    uint8_t size : 1;
-
+    color_t** color_data;
     unsigned int width;
     unsigned int height;
 } layer_image_data_t;
@@ -19,12 +14,10 @@ typedef struct {
 } layer_drawing_data_t;
 
 typedef struct {
-    union {
-        color64_t c64;
-        color32_t c32;
-    };
+    color_t color;
 
-    uint8_t size : 1;
+    unsigned int width;
+    unsigned int height;
 } layer_color_data_t;
 
 typedef enum {

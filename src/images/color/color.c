@@ -1,23 +1,28 @@
 #include "color.h"
+#include <math.h>
 
-color64_t color32_to_color64(color32_t color) {
-    return (color64_t) {
-        .components = {
-            .r = color.components.r << 8,
-            .g = color.components.g << 8,
-            .b = color.components.b << 8,
-            .a = color.components.a << 8
-        }
-    };
+#define BYTE2FLOAT(A) ((float) A) / 256
+#define FLOAT2BYTE(A) ((uint8_t)(A * 256))
+
+#define BLEND_G(A) (A <= 0.5) ? ((((16 * A) - 12) * A + 4) * A) : \
+                                (sqrt(A)) \
+
+#define BLEND(A, B) (b <= 0.5) ? (A - (1 - (2 * B)) * A * (1 - A)) : \
+                                 (A + ((2 * B) - 1) * (BLEND_G(A) - A)) \
+
+
+
+bool color_equals(color_t a, color_t b) {
+    return (a.r == b.r) && (a.g == b.g) && (a.b == b.b) && (a.a == b.a);
 }
 
-color32_t color64_to_color32(color64_t color) {
-    return (color32_t) {
-        .components = {
-            .r = color.components.r >> 8,
-            .g = color.components.g >> 8,
-            .b = color.components.b >> 8,
-            .a = color.components.a >> 8
-        }
+color_t color_blend(color_t a, color_t b) {
+    float alpha = a.a + b.a * (1 - a.a);
+
+    return (color_t) {
+        .r = (a.r * a.a + b.r * b.a * (1 - a.a)) / alpha,
+        .g = (a.g * a.a + b.g * b.a * (1 - a.a)) / alpha,
+        .b = (a.b * a.a + b.b * b.a * (1 - a.a)) / alpha,
+        .a = alpha
     };
 }
