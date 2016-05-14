@@ -4,6 +4,8 @@ SOURCEDIR := src
 BINARY := whoart
 BUILDDIR := build
 HEADERDIR := lib
+CFLAGS :=
+LDFLAGS := -lm
 
 SOURCES := $(shell find $(SOURCEDIR) -name '*.c')
 OBJECTS := $(addprefix $(BUILDDIR)/, $(SOURCES:%.c=%.o))
