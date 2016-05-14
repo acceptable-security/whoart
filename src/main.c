@@ -1,8 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "quadtree/quadtree.h"
+#include "ui/interface.h"
 
-int main(int argc, char* argv[]) {
+int quadtree_test() {
     quadtree_t* qt = quadtree_init((aabb_t) {
         .minX = 0,
         .minY = 0,
@@ -27,4 +28,14 @@ int main(int argc, char* argv[]) {
     // printf("%s\n", (const char*) quadtree_search(qt, 20, 9));
 
     quadtree_clean(qt);
+
+    return 0;
+}
+
+int main(int argc, char* argv[]) {
+    window_init(800, 600);
+    window_set_font("res/fonts/DroidSans.ttf", 14);
+    window_loop(NULL);
+    window_close();
+    return 0;
 }
