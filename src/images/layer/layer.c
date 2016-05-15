@@ -14,6 +14,7 @@ layer_t* layer_init(layer_type_t type, unsigned int width, unsigned int height) 
         return NULL;
     }
 
+
     layer->visible = true;
     layer->type = type;
     layer->width = width;
