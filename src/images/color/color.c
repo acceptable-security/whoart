@@ -20,9 +20,9 @@ color_t color_blend(color_t a, color_t b) {
     float alpha = a.a + b.a * (1 - a.a);
 
     return (color_t) {
-        .r = (a.r * a.a + b.r * b.a * (1 - a.a)),
-        .g = (a.g * a.a + b.g * b.a * (1 - a.a)),
-        .b = (a.b * a.a + b.b * b.a * (1 - a.a)),
+        .r = ((a.r * a.a) + (b.r * b.a) * (1 - a.a)) / alpha,
+        .g = ((a.g * a.a) + (b.g * b.a) * (1 - a.a)) / alpha,
+        .b = ((a.b * a.a) + (b.b * b.a) * (1 - a.a)) / alpha,
         .a = alpha
     };
 }

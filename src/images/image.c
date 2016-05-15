@@ -83,7 +83,7 @@ bool image_composite(image_t** _image) {
                 };
 
                 for ( int i = 0; i < image->layer_cnt; i++ ) {
-                    color = color_blend(color, layer_get_pixel(image->layers[i], x, y));
+                    color = color_blend(layer_get_pixel(image->layers[i], x, y), color);
                 }
 
                 layer_put_pixel(image->composite_layer, x, y, color);
