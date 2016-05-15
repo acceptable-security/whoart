@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "quadtree/quadtree.h"
+#include "images/image.h"
 #include "ui/interface.h"
 
 int quadtree_test() {
@@ -32,10 +33,36 @@ int quadtree_test() {
     return 0;
 }
 
-int main(int argc, char* argv[]) {
+int interface_test() {
     window_init(800, 600);
     window_set_font("res/fonts/DroidSans.ttf", 14);
     window_loop(NULL);
     window_close();
+    return 0;
+}
+
+int main(int argc, char* argv[]) {
+    image_t* image = image_init("Image 1", 64, 64);
+    image_new_layer(&image, LAYER_IMAGE);
+
+    for ( int i = 0; i < 30; i++ ) {
+        layer_put_pixel(image->layers[0], i, i, (color_t){
+            .r = 0.5,
+            .g = 0.5,
+            .b = 0.5,
+            .a = 1.0
+        });
+    }
+
+    color_t color = layer_get_pixel(image->layers[0], 0, 0);
+
+    // printf("%f %f %f %f\n", color.r, color.g, color.b, color.a);
+
+    window_init(800, 600);
+    window_set_font("res/fonts/DroidSans.ttf", 14);
+    window_add_image(image);
+    window_loop(NULL);
+    window_close();
+
     return 0;
 }

@@ -20,6 +20,7 @@ typedef enum {
 
 typedef struct {
     layer_type_t type;
+    unsigned int textureID;
 
     bool visible;
     bool dirty;
@@ -38,3 +39,6 @@ layer_t* layer_init(layer_type_t type, unsigned int width, unsigned int height);
 void layer_put_pixel(layer_t* layer, unsigned int x, unsigned int y, color_t color);
 color_t layer_get_pixel(layer_t* layer, unsigned int x, unsigned int y);
 bool layer_load_image(layer_t* layer, const char* filename);
+bool layer_new_texture(layer_t* layer);
+bool layer_transfer_texture(layer_t* layer);
+void layer_clean(layer_t* layer);

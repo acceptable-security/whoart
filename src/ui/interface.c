@@ -23,15 +23,26 @@
 #include "../../lib/nuklear_glfw_gl3.h"
 
 #include "interface.h"
+#include "../images/image.h"
 
 #define MAX_VERTEX_BUFFER 512 * 1024
 #define MAX_ELEMENT_BUFFER 128 * 1024
+
+typedef struct nk_image nk_image_t;
 
 typedef struct {
     int width;
     int height;
     GLFWwindow* win;
     struct nk_context* ctx;
+
+    image_t** images;
+    unsigned int image_cnt;
+    unsigned int image_alloc;
+
+    nk_image_t* nk_images;
+    unsigned int nk_image_cnt;
+    unsigned int nk_image_alloc;
 } window_context_t;
 
 window_context_t global_context; // THIS IS BAD
@@ -51,9 +62,9 @@ int window_init(int width, int height) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-#ifdef __APPLE__
+    #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
+    #endif
 
     global_context.win = glfwCreateWindow(width, height, "whoart", NULL, NULL);
     glfwMakeContextCurrent(global_context.win);
@@ -70,7 +81,46 @@ int window_init(int width, int height) {
 
     global_context.ctx = nk_glfw3_init(global_context.win, NK_GLFW3_INSTALL_CALLBACKS);
 
+    global_context.image_cnt = 0;
+    global_context.image_alloc = 8;
+    global_context.images = (image_t**) malloc(global_context.image_alloc * sizeof(image_t*));
+
+    global_context.nk_image_cnt = 0;
+    global_context.nk_image_alloc = 8;
+    global_context.nk_images = (nk_image_t*) malloc(global_context.nk_image_alloc * sizeof(nk_image_t));
+
+
     return 0;
+}
+
+void window_add_image(image_t* image) {
+    if ( global_context.image_cnt >= global_context.image_alloc ) {
+        image->layer_alloc += 8;
+        image_t** tmp = realloc(global_context.images, global_context.image_alloc * sizeof(image_t*));
+
+        if ( tmp == NULL ) {
+            free(global_context.images);
+            return;
+        }
+
+        global_context.images = tmp;
+    }
+
+    global_context.images[global_context.image_cnt++] = image;
+
+    if ( global_context.nk_image_cnt >= global_context.nk_image_alloc ) {
+        image->layer_alloc += 8;
+        nk_image_t* tmp = realloc(global_context.nk_images, global_context.nk_image_alloc * sizeof(nk_image_t));
+
+        if ( tmp == NULL ) {
+            free(global_context.nk_images);
+            return;
+        }
+
+        global_context.nk_images = tmp;
+    }
+
+    global_context.nk_images[global_context.nk_image_cnt++] = nk_image_id((int) image_render(&image));
 }
 
 void window_set_font(const char* filename, int size) {
@@ -92,6 +142,17 @@ void window_render() {
         }
     }
     nk_end(global_context.ctx);
+
+    for ( int i = 0; i < global_context.image_cnt; i++ ) {
+        image_t* image = global_context.images[i];
+        image_render(&image);
+
+        if ( nk_begin(global_context.ctx, &layout, image->name, nk_rect(0, 0, image->width * 2, image->height * 2), NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE | NK_WINDOW_MINIMIZABLE | NK_WINDOW_TITLE) ) {
+            nk_layout_row_static(global_context.ctx, image->height, image->width, 1);
+            nk_image(global_context.ctx, global_context.nk_images[i]);
+        }
+        nk_end(global_context.ctx);
+    }
 }
 
 void window_loop(callback_t callback) {
@@ -115,6 +176,18 @@ void window_loop(callback_t callback) {
 }
 
 void window_close() {
+    if ( global_context.images != NULL ) {
+        for ( int i = 0; i < global_context.image_cnt; i++ ) {
+            image_clean(&global_context.images[i]);
+        }
+
+        free(global_context.images);
+    }
+
+    if ( global_context.nk_images != NULL ) {
+        free(global_context.nk_images);
+    }
+
     nk_glfw3_shutdown();
     glfwTerminate();
 }

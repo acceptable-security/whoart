@@ -1,15 +1,19 @@
 #include "image.h"
 #include <stdlib.h>
 #include <string.h>
-#include <GLFW/glfw3.h>
 
-image_t* image_init(unsigned int width, unsigned int height) {
+#include <stdio.h>
+
+image_t* image_init(const char* name, unsigned int width, unsigned int height) {
     image_t* image = (image_t*) malloc(sizeof(image_t));
 
     if ( image == NULL ) {
         return NULL;
     }
 
+    image->name = name;
+    image->width = width;
+    image->height = height;
     image->layer_cnt = 0;
     image->layer_alloc = 8;
     image->layers = (layer_t**) malloc(image->layer_alloc * sizeof(layer_t*));
@@ -71,9 +75,14 @@ bool image_composite(image_t** _image) {
     if ( image->layer_cnt > 0 ) {
         for ( int x = 0; x < image->width; x++ ) {
             for ( int y = 0; y < image->height; y++ ) {
-                color_t color = layer_get_pixel(image->layers[0], x, y);
+                color_t color = (color_t) {
+                    .r = 1.0,
+                    .g = 1.0,
+                    .b = 1.0,
+                    .a = 1.0
+                };
 
-                for ( int i = 1; i < image->layer_cnt; i++ ) {
+                for ( int i = 0; i < image->layer_cnt; i++ ) {
                     color = color_blend(color, layer_get_pixel(image->layers[i], x, y));
                 }
 
@@ -85,41 +94,6 @@ bool image_composite(image_t** _image) {
             image->layers[i]->dirty = false;
         }
     }
-
-    return true;
-}
-
-bool image_new_texture(image_t** _image) {
-    image_t* image = *_image;
-
-    if ( image == NULL ) {
-        return false;
-    }
-
-    if ( image->textureID == 0 ) {
-        glGenTextures(1, &image->textureID);
-    }
-
-    glBindTexture(GL_TEXTURE_2D, image->textureID);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-    return image_transfer_texture(_image);
-}
-
-bool image_transfer_texture(image_t** _image) {
-    image_t* image = *_image;
-
-    if ( image == NULL ) {
-        return false;
-    }
-
-    if ( image->textureID == 0 ) {
-        return false;
-    }
-
-    glBindTexture(GL_TEXTURE_2D, image->textureID);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image->width, image->height, 0, GL_RGBA, GL_FLOAT, image->composite_layer->image_data->color_data);
 
     return true;
 }
@@ -147,20 +121,45 @@ unsigned int image_render(image_t** _image) {
         return 0;
     }
 
+    if ( image->composite_layer->textureID == 0 ) {
+        printf("Creating a new texture...\n");
+        if ( !layer_new_texture(image->composite_layer) ) {
+            return 0;
+        }
+    }
+
     if ( image_needs_composite(_image) ) {
+        printf("Compositing...\n");
         image_composite(_image);
-    }
 
-    if ( image->textureID == 0 ) {
-        if ( !image_new_texture(_image) ) {
-            return 0;
-        }
-    }
-    else {
-        if ( !image_transfer_texture(_image) ) {
+        printf("Transfering texture...\n");
+        if ( !layer_transfer_texture(image->composite_layer) ) {
             return 0;
         }
     }
 
-    return image->textureID;
+    // printf("Resulting textureID %d\n", image->composite_layer->textureID);
+    return image->composite_layer->textureID;
+}
+
+void image_clean(image_t** _image) {
+    image_t* image = *_image;
+
+    if ( image == NULL ) {
+        return;
+    }
+
+    if ( image->layers != NULL ) {
+        for ( int i = 0; i < image->layer_cnt; i++ ) {
+            layer_clean(image->layers[i]);
+        }
+
+        free(image->layers);
+    }
+
+    if ( image->composite_layer != NULL ) {
+        layer_clean(image->composite_layer);
+    }
+
+    free(image);
 }

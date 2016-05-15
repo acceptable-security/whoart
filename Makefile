@@ -4,7 +4,7 @@ SOURCEDIR := src
 BINARY := whoart
 BUILDDIR := build
 HEADERDIR := lib
-CFLAGS :=
+CFLAGS := -g
 LDFLAGS := -lm -lglfw  -lGL -lX11 -lpthread -lXrandr -lXi -lGLEW
 
 SOURCES := $(shell find $(SOURCEDIR) -name '*.c')
