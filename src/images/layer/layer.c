@@ -7,13 +7,14 @@
 #include "../../../lib/stb_image.h"
 
 
-layer_t* layer_init(layer_type_t type, unsigned int width, unsigned int height) {
+layer_t* layer_init(layer_type_t type, unsigned int width, unsigned int height, const char* name) {
     layer_t* layer = (layer_t*) malloc(sizeof(layer_t));
 
     if ( layer == NULL ) {
         return NULL;
     }
 
+    layer->name = name;
 
     layer->visible = true;
     layer->type = type;

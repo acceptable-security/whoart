@@ -31,19 +31,23 @@
 
 typedef struct nk_image nk_image_t;
 
+#define GET_IMG(I) ((image_data_t*) global_context.images->items[I])
+
+typedef struct {
+    image_t* image;
+    nk_image_t nk_image;
+    list_t* layers;
+} image_data_t;
+
+void image_data_clean(image_data_t* data);
+
 typedef struct {
     int width;
     int height;
     GLFWwindow* win;
     struct nk_context* ctx;
 
-    image_t** images;
-    unsigned int image_cnt;
-    unsigned int image_alloc;
-
-    nk_image_t* nk_images;
-    unsigned int nk_image_cnt;
-    unsigned int nk_image_alloc;
+    list_t* images;
 } window_context_t;
 
 window_context_t global_context; // THIS IS BAD
@@ -81,61 +85,38 @@ int window_init(int width, int height) {
     }
 
     global_context.ctx = nk_glfw3_init(global_context.win, NK_GLFW3_INSTALL_CALLBACKS);
-
-    global_context.image_cnt = 0;
-    global_context.image_alloc = 8;
-    global_context.images = (image_t**) malloc(global_context.image_alloc * sizeof(image_t*));
-
-    global_context.nk_image_cnt = 0;
-    global_context.nk_image_alloc = 8;
-    global_context.nk_images = (nk_image_t*) malloc(global_context.nk_image_alloc * sizeof(nk_image_t));
-
+    global_context.images = list_init(&image_data_clean);
 
     return 0;
 }
 
 void window_add_image(image_t* image) {
-    if ( global_context.image_cnt >= global_context.image_alloc ) {
-        image->layer_alloc += 8;
-        image_t** tmp = realloc(global_context.images, global_context.image_alloc * sizeof(image_t*));
+    image_data_t* data = (image_data_t*) malloc(sizeof(image_data_t));
 
-        if ( tmp == NULL ) {
-            free(global_context.images);
-            return;
-        }
-
-        global_context.images = tmp;
-    }
-
-    global_context.images[global_context.image_cnt++] = image;
-
-    if ( global_context.nk_image_cnt >= global_context.nk_image_alloc ) {
-        image->layer_alloc += 8;
-        nk_image_t* tmp = realloc(global_context.nk_images, global_context.nk_image_alloc * sizeof(nk_image_t));
-
-        if ( tmp == NULL ) {
-            free(global_context.nk_images);
-            return;
-        }
-
-        global_context.nk_images = tmp;
-    }
-
-    global_context.nk_images[global_context.nk_image_cnt++] = nk_image_id((int) image_render(&image));
-}
-
-void window_set_image_scale(int indx, float scale) {
-    if ( indx < 0 || indx >= global_context.image_cnt ) {
+    if ( data == NULL ) {
         return;
     }
 
-    image_t* image = global_context.images[indx];
+    data->image = image;
+    data->nk_image = nk_image_id((int) image_render(&image));
+    data->layers = list_init(NULL);
+    list_add(&global_context.images, data);
+}
+
+void window_set_image_scale(int indx, float scale) {
+    if ( indx < 0 || indx >= global_context.images->length ) {
+        return;
+    }
+
+    image_t* image = GET_IMG(indx)->image;
     int width = image->width * scale;
     int height = image->height * scale;
     int tex = image_render(&image);
 
-    if ( global_context.nk_images[indx].region[2] != width || global_context.nk_images[indx].region[3] != height ) {
-        global_context.nk_images[indx] = nk_subimage_id(tex, width, height, (struct nk_rect) {
+    nk_image_t nk_img = GET_IMG(indx)->nk_image;
+
+    if ( nk_img.region[2] != width || nk_img.region[3] != height ) {
+        GET_IMG(indx)->nk_image = nk_subimage_id(tex, width, height, (struct nk_rect) {
             .x = 0,
             .y = 0,
             .w = width,
@@ -155,37 +136,40 @@ void window_set_font(const char* filename, int size) {
 void window_render() {
     struct nk_panel layout;
 
-    if ( nk_begin(global_context.ctx, &layout, "whoart", nk_rect(50, 50, 230, 250), NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE | NK_WINDOW_MINIMIZABLE | NK_WINDOW_TITLE) ) {
-        nk_layout_row_static(global_context.ctx, 30, 80, 1);
-
-        if ( nk_button_label(global_context.ctx, "button", NK_BUTTON_DEFAULT) ) {
-            fprintf(stdout, "button pressed\n");
-        }
-    }
-    nk_end(global_context.ctx);
-
-    for ( int i = 0; i < global_context.image_cnt; i++ ) {
-        image_t* image = global_context.images[i];
+    for ( int i = 0; i < global_context.images->length; i++ ) {
+        image_t* image = GET_IMG(i)->image;
         image_render(&image);
 
         if ( nk_begin(global_context.ctx, &layout, image->name, nk_rect(0, 0, image->width * 2, image->height * 2), NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE | NK_WINDOW_MINIMIZABLE | NK_WINDOW_TITLE) ) {
-            float size = ((float) global_context.nk_images[i].region[3]) / ((float) image->height);
-            nk_layout_row_static(global_context.ctx, 20, image->width * 2, 1);
-            nk_label(global_context.ctx, "Zoom: ", NK_TEXT_LEFT);
-            nk_slider_float(global_context.ctx, 0.5f, &size, 10.0, 0.5f);
+            float size = ((float) GET_IMG(i)->nk_image.region[3]) / ((float) image->height);
+            nk_layout_row_dynamic(global_context.ctx, 20, 1);
+            nk_labelf(global_context.ctx, NK_TEXT_LEFT, "Zoom: %f", size);
+            nk_slider_float(global_context.ctx, 0.5f, &size, 10.0, 0.1f);
 
-            if ( global_context.nk_images[i].region[2] == 0 ) {
+            if ( GET_IMG(i)->nk_image.region[2] == 0 ) {
                 nk_layout_row_static(global_context.ctx, image->height, image->width, 1);
             }
             else {
-                nk_layout_row_static(global_context.ctx, global_context.nk_images[i].region[3], global_context.nk_images[i].region[2], 1);
+                nk_layout_row_static(global_context.ctx, GET_IMG(i)->nk_image.region[3], GET_IMG(i)->nk_image.region[2], 1);
             }
 
 
             window_set_image_scale(i, size);
-            nk_image(global_context.ctx, global_context.nk_images[i]);
+            nk_image(global_context.ctx, GET_IMG(i)->nk_image);
 
         }
+        nk_end(global_context.ctx);
+
+        if ( nk_begin(global_context.ctx, &layout, "Layers", nk_rect(image->width * 2 + 10, 0, 150, 300), NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE | NK_WINDOW_MINIMIZABLE | NK_WINDOW_TITLE) ) {
+            nk_layout_row_dynamic(global_context.ctx, 30, 1);
+
+            for ( int j = 0; j < image->layers->length; j++ ) {
+                nk_button_image_label(global_context.ctx, GET_IMG(i)->nk_image, ((layer_t*) image->layers->items[j])->name, NK_TEXT_CENTERED, NK_BUTTON_DEFAULT);
+            }
+
+            nk_layout_row_static(global_context.ctx, 30, 80, 1);
+        }
+
         nk_end(global_context.ctx);
     }
 }
@@ -210,17 +194,25 @@ void window_loop(callback_t callback) {
     }
 }
 
-void window_close() {
-    if ( global_context.images != NULL ) {
-        for ( int i = 0; i < global_context.image_cnt; i++ ) {
-            image_clean(&global_context.images[i]);
-        }
-
-        free(global_context.images);
+void image_data_clean(image_data_t* data) {
+    if ( data == NULL ) {
+        return;
     }
 
-    if ( global_context.nk_images != NULL ) {
-        free(global_context.nk_images);
+    if ( data->image != NULL ) {
+        image_clean(&data->image);
+    }
+
+    if ( data->layers != NULL ) {
+        list_clean(&data->layers);
+    }
+
+    free(data);
+}
+
+void window_close() {
+    if ( global_context.images != NULL ) {
+        list_clean(&global_context.images);
     }
 
     nk_glfw3_shutdown();

@@ -1,5 +1,7 @@
 #pragma once
+
 #include "layer/layer.h"
+#include "../util/util.h"
 
 typedef struct {
     const char* name;
@@ -9,9 +11,7 @@ typedef struct {
 
     layer_t* composite_layer;
 
-    unsigned int layer_cnt;
-    unsigned int layer_alloc;
-    layer_t** layers;
+    list_t* layers;
 } image_t;
 
 image_t* image_init(const char* name, unsigned int width, unsigned int height);

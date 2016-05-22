@@ -1,7 +1,7 @@
 #include "image.h"
 #include <stdlib.h>
 #include <string.h>
-
+#define _GNU_SOURCE
 #include <stdio.h>
 
 image_t* image_init(const char* name, unsigned int width, unsigned int height) {
@@ -14,18 +14,14 @@ image_t* image_init(const char* name, unsigned int width, unsigned int height) {
     image->name = name;
     image->width = width;
     image->height = height;
-    image->layer_cnt = 0;
-    image->layer_alloc = 8;
-    image->layers = (layer_t**) malloc(image->layer_alloc * sizeof(layer_t*));
+    image->layers = list_init(&layer_clean);
 
     if ( image->layers == NULL ) {
         free(image);
         return NULL;
     }
 
-    memset(image->layers, 0, image->layer_alloc * sizeof(layer_t*));
-
-    image->composite_layer = layer_init(LAYER_IMAGE, image->width, image->height);
+    image->composite_layer = layer_init(LAYER_IMAGE, image->width, image->height, "");
 
     return image;
 }
@@ -37,27 +33,26 @@ bool image_new_layer(image_t** _image, layer_type_t type) {
         return false;
     }
 
-    layer_t* layer = layer_init(type, image->width, image->height);
+    char* name;
+
+    if ( asprintf(&name, "Layer %i", (image->layers->length + 1)) == -1 ) {
+        return false;
+    }
+
+    layer_t* layer = layer_init(type, image->width, image->height, name);
 
     if ( layer == NULL ) {
         return false;
     }
 
-    if ( image->layer_cnt >= image->layer_alloc ) {
-        image->layer_alloc += 8;
-        layer_t** tmp = realloc(image->layers, image->layer_alloc * sizeof(layer_t*));
+    list_add(&image->layers, layer);
 
-        if ( tmp == NULL ) {
-            free(tmp);
-            free(image);
-            *_image = NULL;
-            return false;
-        }
-
-        image->layers = tmp;
+    if ( image->layers == NULL ) {
+        printf("CLEANING!");
+        image_clean(_image);
+        return false;
     }
 
-    image->layers[image->layer_cnt++] = layer;
     return true;
 }
 
@@ -69,10 +64,10 @@ bool image_composite(image_t** _image) {
     }
 
     if ( image->composite_layer == NULL ) {
-        image->composite_layer = layer_init(LAYER_IMAGE, image->width, image->height);
+        image->composite_layer = layer_init(LAYER_IMAGE, image->width, image->height, "");
     }
 
-    if ( image->layer_cnt > 0 ) {
+    if ( image->layers->length > 0 ) {
         for ( int x = 0; x < image->width; x++ ) {
             for ( int y = 0; y < image->height; y++ ) {
                 color_t color = (color_t) {
@@ -82,16 +77,16 @@ bool image_composite(image_t** _image) {
                     .a = 1.0
                 };
 
-                for ( int i = 0; i < image->layer_cnt; i++ ) {
-                    color = color_blend(layer_get_pixel(image->layers[i], x, y), color);
+                for ( int i = 0; i < image->layers->length; i++ ) {
+                    color = color_blend(layer_get_pixel((layer_t*) image->layers->items[i], x, y), color);
                 }
 
                 layer_put_pixel(image->composite_layer, x, y, color);
             }
         }
 
-        for ( int i = 0; i < image->layer_cnt; i++ ) {
-            image->layers[i]->dirty = false;
+        for ( int i = 0; i < image->layers->length; i++ ) {
+            ((layer_t*) image->layers->items[i])->dirty = false;
         }
     }
 
@@ -105,8 +100,8 @@ bool image_needs_composite(image_t** _image) {
         return false;
     }
 
-    for ( int i = 0; i < image->layer_cnt; i++ ) {
-        if ( image->layers[i]->dirty ) {
+    for ( int i = 0; i < image->layers->length; i++ ) {
+        if ( ((layer_t*) image->layers->items[i])->dirty ) {
             return true;
         }
     }
@@ -150,11 +145,11 @@ void image_clean(image_t** _image) {
     }
 
     if ( image->layers != NULL ) {
-        for ( int i = 0; i < image->layer_cnt; i++ ) {
-            layer_clean(image->layers[i]);
-        }
+        list_clean(&image->layers);
+    }
 
-        free(image->layers);
+    if ( image->name != NULL && strcmp(image->name, "") != 0 ) {
+        free((char*) image->name);
     }
 
     if ( image->composite_layer != NULL ) {
@@ -162,4 +157,5 @@ void image_clean(image_t** _image) {
     }
 
     free(image);
+    *_image = NULL;
 }

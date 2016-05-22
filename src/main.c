@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
     image_new_layer(&image, LAYER_IMAGE);
 
     for ( int i = 0; i < 40; i++ ) {
-        layer_put_pixel(image->layers[0], i, i, (color_t){
+        layer_put_pixel(image->layers->items[0], i, i, (color_t){
             .r = 0.5,
             .g = 0.5,
             .b = 0.5,
@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
     }
 
     for ( int i = 0; i < 40; i++ ) {
-        layer_put_pixel(image->layers[0], i, 64 - i, (color_t){
+        layer_put_pixel(image->layers->items[0], i, 64 - i, (color_t){
             .r = 1.0,
             .g = 0,
             .b = 0,
