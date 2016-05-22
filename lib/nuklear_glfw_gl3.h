@@ -13,7 +13,6 @@
 #ifndef NK_GLFW_GL3_H_
 #define NK_GLFW_GL3_H_
 
-#include "nuklear.h"
 #include <GLFW/glfw3.h>
 
 enum nk_glfw_init_state{
@@ -264,7 +263,7 @@ nk_glfw3_render(enum nk_anti_aliasing AA, int max_vertex_buffer, int max_element
             glBindTexture(GL_TEXTURE_2D, (GLuint)cmd->texture.id);
             glScissor(
                 (GLint)(cmd->clip_rect.x * glfw.fb_scale.x),
-                (GLint)((glfw.display_height - (GLint)(cmd->clip_rect.y + cmd->clip_rect.h)) * glfw.fb_scale.y),
+                (GLint)((glfw.height - (GLint)(cmd->clip_rect.y + cmd->clip_rect.h)) * glfw.fb_scale.y),
                 (GLint)(cmd->clip_rect.w * glfw.fb_scale.x),
                 (GLint)(cmd->clip_rect.h * glfw.fb_scale.y));
             glDrawElements(GL_TRIANGLES, (GLsizei)cmd->elem_count, GL_UNSIGNED_SHORT, offset);

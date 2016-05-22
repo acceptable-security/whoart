@@ -64,13 +64,10 @@ int main(int argc, char* argv[]) {
         });
     }
 
-    color_t color = layer_get_pixel(image->layers[0], 0, 0);
-
-    // printf("%f %f %f %f\n", color.r, color.g, color.b, color.a);
-
     window_init(800, 600);
     window_set_font("res/fonts/DroidSans.ttf", 14);
     window_add_image(image);
+    window_set_image_scale(0, 5.0);
     window_loop(NULL);
     window_close();
 

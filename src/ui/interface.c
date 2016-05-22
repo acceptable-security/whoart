@@ -20,6 +20,7 @@
 #define NK_INCLUDE_DEFAULT_FONT
 #define NK_IMPLEMENTATION
 #define NK_GLFW_GL3_IMPLEMENTATION
+#include "../../lib/nuklear.h"
 #include "../../lib/nuklear_glfw_gl3.h"
 
 #include "interface.h"
@@ -123,6 +124,26 @@ void window_add_image(image_t* image) {
     global_context.nk_images[global_context.nk_image_cnt++] = nk_image_id((int) image_render(&image));
 }
 
+void window_set_image_scale(int indx, float scale) {
+    if ( indx < 0 || indx >= global_context.image_cnt ) {
+        return;
+    }
+
+    image_t* image = global_context.images[indx];
+    int width = image->width * scale;
+    int height = image->height * scale;
+    int tex = image_render(&image);
+
+    if ( global_context.nk_images[indx].region[2] != width || global_context.nk_images[indx].region[3] != height ) {
+        global_context.nk_images[indx] = nk_subimage_id(tex, width, height, (struct nk_rect) {
+            .x = 0,
+            .y = 0,
+            .w = width,
+            .h = height
+        });
+    }
+}
+
 void window_set_font(const char* filename, int size) {
     struct nk_font_atlas* atlas;
     nk_glfw3_font_stash_begin(&atlas);
@@ -148,8 +169,22 @@ void window_render() {
         image_render(&image);
 
         if ( nk_begin(global_context.ctx, &layout, image->name, nk_rect(0, 0, image->width * 2, image->height * 2), NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE | NK_WINDOW_MINIMIZABLE | NK_WINDOW_TITLE) ) {
-            nk_layout_row_static(global_context.ctx, image->height, image->width, 1);
+            float size = ((float) global_context.nk_images[i].region[3]) / ((float) image->height);
+            nk_layout_row_static(global_context.ctx, 20, image->width * 2, 1);
+            nk_label(global_context.ctx, "Zoom: ", NK_TEXT_LEFT);
+            nk_slider_float(global_context.ctx, 0.5f, &size, 10.0, 0.5f);
+
+            if ( global_context.nk_images[i].region[2] == 0 ) {
+                nk_layout_row_static(global_context.ctx, image->height, image->width, 1);
+            }
+            else {
+                nk_layout_row_static(global_context.ctx, global_context.nk_images[i].region[3], global_context.nk_images[i].region[2], 1);
+            }
+
+
+            window_set_image_scale(i, size);
             nk_image(global_context.ctx, global_context.nk_images[i]);
+
         }
         nk_end(global_context.ctx);
     }
