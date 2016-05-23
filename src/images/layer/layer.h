@@ -1,4 +1,10 @@
+#pragma once
+
 #include "../quadimage/quadimage.h"
+
+#define NK_INCLUDE_FIXED_TYPES
+#define NK_INCLUDE_STANDARD_IO
+#include "../../../lib/nuklear.h"
 
 typedef struct {
     color_t* color_data;

@@ -43,7 +43,7 @@ int interface_test() {
 
 int main(int argc, char* argv[]) {
     image_t* image = image_init("Image 1", 64, 64);
-    image_new_layer(&image, LAYER_DRAWING);
+    image_new_layer(&image, LAYER_IMAGE);
     image_new_layer(&image, LAYER_IMAGE);
 
     for ( int i = 0; i < 40; i++ ) {
@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
     }
 
     for ( int i = 0; i < 40; i++ ) {
-        layer_put_pixel(image->layers->items[0], i, 64 - i, (color_t){
+        layer_put_pixel(image->layers->items[1], i, 64 - i, (color_t){
             .r = 1.0,
             .g = 0,
             .b = 0,
