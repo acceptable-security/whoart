@@ -4,6 +4,11 @@
 
 #define NK_INCLUDE_FIXED_TYPES
 #define NK_INCLUDE_STANDARD_IO
+#define NK_INCLUDE_DEFAULT_ALLOCATOR
+#define NK_INCLUDE_VERTEX_BUFFER_OUTPUT
+#define NK_INCLUDE_FONT_BAKING
+#define NK_INCLUDE_DEFAULT_FONT
+#define NK_GLFW_GL3_IMPLEMENTATION
 #include "../../../lib/nuklear.h"
 
 typedef struct {
@@ -26,6 +31,7 @@ typedef enum {
 
 typedef struct {
     layer_type_t type;
+    bool hasTexture;
     unsigned int textureID;
 
     bool visible;

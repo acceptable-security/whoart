@@ -78,7 +78,9 @@ bool image_composite(image_t** _image) {
                 };
 
                 for ( int i = 0; i < image->layers->length; i++ ) {
-                    color = color_blend(layer_get_pixel((layer_t*) image->layers->items[i], x, y), color);
+                    if ( ((layer_t*) image->layers->items[i])->visible ) {
+                        color = color_blend(layer_get_pixel((layer_t*) image->layers->items[i], x, y), color);
+                    }
                 }
 
                 layer_put_pixel(image->composite_layer, x, y, color);
@@ -86,6 +88,10 @@ bool image_composite(image_t** _image) {
         }
 
         for ( int i = 0; i < image->layers->length; i++ ) {
+            if ( ((layer_t*) image->layers->items[i])->hasTexture ) {
+                layer_transfer_texture((layer_t*) image->layers->items[i]);
+            }
+
             ((layer_t*) image->layers->items[i])->dirty = false;
         }
     }
@@ -116,7 +122,7 @@ unsigned int image_render(image_t** _image) {
         return 0;
     }
 
-    if ( image->composite_layer->textureID == 0 ) {
+    if ( !image->composite_layer->hasTexture ) {
         printf("Creating a new texture...\n");
         if ( !layer_new_texture(image->composite_layer) ) {
             return 0;

@@ -46,6 +46,8 @@ int main(int argc, char* argv[]) {
     image_new_layer(&image, LAYER_IMAGE);
     image_new_layer(&image, LAYER_IMAGE);
 
+    // printf("Image layer count: %d\n", image->layers->length);
+
     for ( int i = 0; i < 40; i++ ) {
         layer_put_pixel(image->layers->items[0], i, i, (color_t){
             .r = 0.5,
@@ -55,7 +57,7 @@ int main(int argc, char* argv[]) {
         });
     }
 
-    for ( int i = 0; i < 40; i++ ) {
+    for ( int i = 1; i < 40; i++ ) {
         layer_put_pixel(image->layers->items[1], i, 64 - i, (color_t){
             .r = 1.0,
             .g = 0,

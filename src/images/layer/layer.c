@@ -14,12 +14,15 @@ layer_t* layer_init(layer_type_t type, unsigned int width, unsigned int height, 
         return NULL;
     }
 
-    layer->name = name;
+    memset(layer, 0, sizeof(layer_t));
 
+    layer->name = name;
     layer->visible = true;
     layer->type = type;
     layer->width = width;
     layer->height = height;
+    layer->hasTexture = false;
+    layer->textureID = 0;
 
     switch ( type ) {
         case LAYER_IMAGE:
@@ -31,6 +34,8 @@ layer_t* layer_init(layer_type_t type, unsigned int width, unsigned int height, 
             }
 
             layer->image_data->color_data = (color_t*) malloc((width * height) * sizeof(color_t));
+
+            memset(layer->image_data->color_data, 0, (width * height) * sizeof(color_t));
 
             return layer;
 
@@ -59,6 +64,14 @@ layer_t* layer_init(layer_type_t type, unsigned int width, unsigned int height, 
 }
 
 void layer_put_pixel(layer_t* layer, unsigned int x, unsigned int y, color_t color) {
+    if ( layer == NULL || layer->image_data == NULL ) {
+        return;
+    }
+
+    if ( x >= layer->width || y >= layer->height ) {
+        return;
+    }
+
     layer->dirty = true;
 
     if ( layer->type == LAYER_IMAGE ) {
@@ -126,10 +139,9 @@ bool layer_load_image(layer_t* layer, const char* filename) {
 }
 
 bool layer_new_texture(layer_t* layer) {
-    if ( layer->textureID == 0 ) {
-        glGenTextures(1, &layer->textureID);
-    }
+    layer->hasTexture = true;
 
+    glGenTextures(1, &layer->textureID);
     glBindTexture(GL_TEXTURE_2D, layer->textureID);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -141,7 +153,7 @@ bool layer_new_texture(layer_t* layer) {
 }
 
 bool layer_transfer_texture(layer_t* layer) {
-    if ( layer->textureID == 0 ) {
+    if ( !layer->hasTexture ) {
         return false;
     }
 

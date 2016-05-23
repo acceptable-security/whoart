@@ -102,10 +102,18 @@ void window_add_image(image_t* image) {
 
     for ( int i = 0; i < image->layers->length; i++ ) {
         layer_t* layer = (layer_t*) image->layers->items[i];
-        layer_new_texture(layer);
+
+        if ( !layer->hasTexture ) {
+            layer_new_texture(layer);
+        }
+        else {
+            layer_transfer_texture(layer);
+        }
+
         nk_image_t _nk_img = nk_image_id(layer->textureID);
         nk_image_t* nk_img = (nk_image_t*) malloc(sizeof(nk_image_t));
         memcpy(nk_img, &_nk_img, sizeof(nk_image_t));
+
         list_add(&data->layers, nk_img);
     }
 
@@ -173,7 +181,12 @@ void window_render() {
             nk_layout_row_dynamic(global_context.ctx, 30, 1);
 
             for ( int j = 0; j < image->layers->length; j++ ) {
-                nk_button_image_label(global_context.ctx, *(nk_image_t*)(GET_IMG(i)->layers->items[i]), ((layer_t*) image->layers->items[j])->name, NK_TEXT_CENTERED, NK_BUTTON_DEFAULT);
+                int val = nk_button_image_label(global_context.ctx, *(nk_image_t*)(GET_IMG(i)->layers->items[j]), ((layer_t*) image->layers->items[j])->name, NK_TEXT_CENTERED, NK_BUTTON_DEFAULT);
+
+                if ( val == nk_true ) {
+                    ((layer_t*) image->layers->items[j])->visible = !((layer_t*) image->layers->items[j])->visible;
+                    ((layer_t*) image->layers->items[j])->dirty = true;
+                }
             }
 
             nk_layout_row_static(global_context.ctx, 30, 80, 1);
